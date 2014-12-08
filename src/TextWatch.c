@@ -100,13 +100,9 @@ void show_bars ()  {
   layer_set_hidden(text_layer_get_layer(bottombarR.layer[0]), false);
 }
 void wrist_flick_handler(AccelAxisType axis, int32_t direction) {
-  if (axis == 1) {
-    if (!shake_timeout) {
-      APP_LOG(APP_LOG_LEVEL_DEBUG, "Shaken not stirred!!!");
+  if (axis == 1 && !shake_timeout) {
       show_bars();
       shake_timeout = app_timer_register (5000, hide_bars, NULL);
-    }
-    else {APP_LOG(APP_LOG_LEVEL_DEBUG, "STIRRED!!!");}
   }
 }
 
