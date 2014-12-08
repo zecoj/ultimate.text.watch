@@ -1,0 +1,26 @@
+{
+    "appKeys": {},
+    "capabilities": [
+        ""
+    ],
+    "companyName": "Ben Nguyen",
+    "longName": "FuzzyTextShake",
+    "projectType": "native",
+    "resources": {
+        "media": [
+            {
+                "file": "images/download.png",
+                "menuIcon": true,
+                "name": "screenshot",
+                "type": "png"
+            }
+        ]
+    },
+    "shortName": "FuzzyTextShake",
+    "uuid": "11490515-3888-4583-9e40-367ed931571d",
+    "versionCode": 4,
+    "versionLabel": "1.2",
+    "watchapp": {
+        "watchface": true
+    }
+}
