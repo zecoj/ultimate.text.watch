@@ -7,6 +7,11 @@ added:
 - shake to show detailed time, date, and battery
 - midday & midnight time
 
+planned:
+- monitor bluetooth connectivity with phone
+- current weather condition
+
 removed:
+- configurations
 - appsync & javascript
 - translations (sorry...)
