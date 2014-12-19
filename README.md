@@ -6,9 +6,10 @@ my stripped-clean & battery-life-focused fork from fuzzy text int'l (https://git
 added:
 - shake to show detailed time, date, and battery
 - midday & midnight time
+- monitor bluetooth connectivity with phone
+
 
 planned:
-- monitor bluetooth connectivity with phone
 - current weather condition
 
 removed:
