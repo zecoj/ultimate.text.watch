@@ -7,19 +7,12 @@
     "longName": "FuzzyTextShake",
     "projectType": "native",
     "resources": {
-        "media": [
-            {
-                "file": "images/download.png",
-                "menuIcon": true,
-                "name": "screenshot",
-                "type": "png"
-            }
-        ]
+        "media": []
     },
     "shortName": "FuzzyTextShake",
     "uuid": "ad75ca5b-7256-463c-b770-fb4b8152cc51",
     "versionCode": 4,
-    "versionLabel": "1.2",
+    "versionLabel": "1.3",
     "watchapp": {
         "watchface": true
     }
