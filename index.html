@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<!--[if lt IE 7 ]><html class="ie ie6" lang="en"> <![endif]-->
+<!--[if IE 7 ]><html class="ie ie7" lang="en"> <![endif]-->
+<!--[if IE 8 ]><html class="ie ie8" lang="en"> <![endif]-->
+<!--[if (gte IE 9)|!(IE)]><!--><html lang="en"> <!--<![endif]-->
+<head>
+
+	<!-- Basic Page Needs
+  ================================================== -->
+	<meta charset="utf-8">
+	<title>Fuzzy.Text.Shake</title>
+	<meta name="description" content="configuration page for Fuzzy.Text.Shake, a Pebble watchface">
+	<meta name="author" content="Ben Nguyen">
+
+	<!-- Mobile Specific Metas
+  ================================================== -->
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+	<!-- CSS
+	<link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
+  ================================================== -->
+
+	<!--[if lt IE 9]>
+		<script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+	<![endif]-->
+
+</head>
+<body>
+
+	<!-- Primary Page Layout
+	================================================== -->
+
+	<div class="container">
+		<header>
+			<h3>Fuzzy.Text.Shake</h3>
+		</header>
+		
+		<form id="config" role="form" class="input-lg">
+			<fieldset>
+				<legend>Text alignment:</legend>
+				<div class="radio">
+					<label>
+						<input type="radio" name="align" value="left" />
+						Left
+					</label>
+				</div>
+				<div class="radio">
+					<label>
+						<input type="radio" name="align" value="center" />
+						Center
+					</label>
+				</div>
+				<div class="radio">
+					<label>
+						<input type="radio" name="align" value="right" checked />
+						Right
+					</label>
+				</div>
+			</fieldset>
+			<br />
+			<fieldset>
+				<legend>Bluetooth monitoring:</legend>
+				<div class="radio">
+					<label>
+						<input type="checkbox" name="bluetooth" value="on" checked />
+						Vibrates & invert colour on (dis)connect
+					</label>
+				</div>
+			</fieldset>
+			<br />
+			<fieldset>
+				<legend>Weather condition update:</legend>
+				<div class="radio">
+					<label>
+						<input type="radio" name="weather" value="off" />
+						Off
+					</label>
+				</div>
+
+				<div class="radio">
+					<label>
+						<input type="radio" name="weather" value="on_15" checked />
+						Every 15 minutes
+					</label>
+				</div>
+
+				<div class="radio">
+					<label>
+						<input type="radio" name="weather" value="on_30" />
+						Every 30 minutes
+					</label>
+				</div>
+
+				<div class="radio">
+					<label>
+						<input type="radio" name="weather" value="on_60" />
+						Every hour
+					</label>
+				</div>
+
+			</fieldset>
+			<br />
+			<fieldset>
+				<legend>Confirm:</legend>
+				<!--
+				<a href="pebblejs://close" class="btn btn-lg btn-default" role="button">Cancel</a>
+				-->
+				<button onclick="location.href='pebblejs://close#'" type="button" class="btn btn-lg btn-primary" id="b-cancel"> Cancel </button>	
+				<button type="button" class="btn btn-lg btn-primary" id="b-submit"> Save </button>
+			</fieldset>
+		</form>
+
+	</div><!-- container -->
+
+<!-- End Document
+================================================== -->
+
+	<script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
+	<script>
+
+		function saveOptions() {
+			var params = {};
+			$('#config').serializeArray().forEach(function(pair) {
+				params[pair.name] = pair.value;
+			});
+
+			var options = {
+				text_align:	params.align || 'right',
+				bluetooth:	params.bluetooth === 'on',
+				weather:	params.weather
+			}
+			return options;
+		}
+
+		function applyOptions() {
+			var $form	= $('#config');
+			var opts	= JSON.parse(getParam('options'));
+			if (opts) {
+				if (opts.text_align) {
+					$form.find('[name="align"]').filter(function(i, btn) {
+						return btn.value === opts.text_align;
+					}).prop('checked', true);
+				}
+				if (opts.bluetooth) {
+					$form.find('[name="bluetooth"]').prop('checked', true);
+				}
+				else {
+					$form.find('[name="bluetooth"]').prop('checked', false);
+				}
+				if (opts.weather) {
+					$form.find('[name="weather"]').filter(function(i, btn) {
+						return btn.value === opts.weather;
+					}).prop('checked', true);
+				}
+			}
+		}
+
+		function getParam(key) {
+			var params = window.location.hash;
+			var val;
+			params.replace(/(?:^|[#&])([a-z]+)=([^&]+)/ig, function(_, k, v) {
+				if (key === k) {
+					val = decodeURIComponent(v);
+				}
+			});
+			return val;
+		}
+
+		$("#b-submit").click(function() {
+			var location = "pebblejs://close#" + encodeURIComponent(JSON.stringify(saveOptions()));
+			document.location = location;
+		});
+
+		applyOptions();
+   </script>
+
+</body>
+</html>
