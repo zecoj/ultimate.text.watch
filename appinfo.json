@@ -1,7 +1,15 @@
 {
-    "appKeys": {},
+    "appKeys": {
+        "alignment": 0,
+        "bluetooth": 1,
+        "icon": 3,
+        "lastsync": 5,
+        "temperatureC": 4,
+        "weather": 2
+    },
     "capabilities": [
-        ""
+        "location",
+        "configurable"
     ],
     "companyName": "Ben Nguyen",
     "longName": "FuzzyTextShake",
@@ -12,7 +20,7 @@
     "shortName": "FuzzyTextShake",
     "uuid": "ad75ca5b-7256-463c-b770-fb4b8152cc51",
     "versionCode": 4,
-    "versionLabel": "1.3",
+    "versionLabel": "1.4",
     "watchapp": {
         "watchface": true
     }
