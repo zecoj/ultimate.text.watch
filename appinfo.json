@@ -3,7 +3,6 @@
         "alignment": 0,
         "bluetooth": 1,
         "icon": 3,
-        "lastsync": 5,
         "temperatureC": 4,
         "weather": 2
     },
@@ -20,7 +19,7 @@
     "shortName": "FuzzyTextShake",
     "uuid": "ad75ca5b-7256-463c-b770-fb4b8152cc51",
     "versionCode": 4,
-    "versionLabel": "1.4",
+    "versionLabel": "1.9",
     "watchapp": {
         "watchface": true
     }

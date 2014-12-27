@@ -18,60 +18,53 @@ var weather = {
 var locationOptions = { "timeout": 150000, "maximumAge": 600000 };
 
 function fetchWeather(latitude, longitude) {
+  var curTime = Math.floor((new Date).getTime()/1000);
+  var lastFetch = localStorage.getItem("lastFetch");
+
   if (isFetching) {
     console.log("fetchWeather: already fetching, quit");
     return;
   }
-  else {
-
-  isFetching = true;
- 
-  /*
-  var lastsync = localStorage.getItem("lastsync");
-  var nextsync = Math.floor((new Date).getTime()/1000);
-  var syncdiff = nextsync - lastsync;
-  console.log("01 lastsync: "+lastsync);
-  console.log("01 nextsync: "+nextsync);
-  console.log("01 syncdiff: "+syncdiff);
-  if ((nextsync - lastsync) < 600) {
-  console.log("no need to sync");
+  else if (curTime - lastFetch < 900) {
+    console.log("fetchWeather: already fetched recently, quit");
     return;
   }
-  */
+  else {
+    isFetching = true;
+    console.log("fetchWeather: fetching now");
 
-  var response;
-  var req = new XMLHttpRequest();
-  req.open('GET', "http://api.openweathermap.org/data/2.5/find?" +
-             "lat=" + latitude + "&lon=" + longitude + "&cnt=1", true);
-  req.onload = function(e) {
-    if (req.readyState == 4) {
-      if(req.status == 200) {
-        console.log(req.responseText);
-        response = JSON.parse(req.responseText);
-        var temperatureC, icon, city;
-        if (response && response.list && response.list.length > 0) {
-          var weatherResult = response.list[0];
-          temperatureC = Math.round(weatherResult.main.temp - 273.15);
-          //temperatureF = Math.round(1.8 * (weatherResult.main.temp - 273.15) + 32);
-          //icon = iconFromWeatherId(weatherResult.weather[0].id);
-          icon = weatherResult.weather[0].main;
-          city = weatherResult.name;
-          //console.log(temperatureF);
-          console.log(temperatureC);
-          console.log(icon);
-          console.log(city);
-          Pebble.sendAppMessage({
-            "icon":icon,
-            "temperatureC":"" + temperatureC+"\u00B0C"
-            });
+    var response;
+    var req = new XMLHttpRequest();
+    req.open('GET', "http://api.openweathermap.org/data/2.5/find?" +
+               "lat=" + latitude + "&lon=" + longitude + "&cnt=1", true);
+    req.onload = function(e) {
+      if (req.readyState == 4) {
+        if(req.status == 200) {
+          console.log(req.responseText);
+          response = JSON.parse(req.responseText);
+          var temperatureC, icon, city;
+          if (response && response.list && response.list.length > 0) {
+            var weatherResult = response.list[0];
+            temperatureC = Math.round(weatherResult.main.temp - 273.15);
+            icon = weatherResult.weather[0].main;
+            city = weatherResult.name;
+            console.log(temperatureC);
+            console.log(icon);
+            console.log(city);
+            localStorage.setItem("lastFetch", curTime);
+            transmitConfiguration({
+              "icon":icon,
+              "temperatureC":"" + temperatureC+"\u00B0C"
+              });
+          }
+        } else {
+          console.log("Error");
         }
-      } else {
-        console.log("Error");
       }
-    }
-  };
-  req.send(null);
-  isFetching = false;
+    };
+    req.send(null);
+    isFetching = false;
+    console.log("fetchWeather: finished fetching, quit");
   }
 }
 
@@ -79,29 +72,27 @@ function locationSuccess(pos) {
   var coordinates = pos.coords;
   var datetime = "======= lastsync: " + new Date();
   console.log(datetime);
-  fetchWeather(coordinates.latitude, coordinates.longitude);
+  if(!isFetching)fetchWeather(coordinates.latitude, coordinates.longitude);
   //window.navigator.geolocation.clearWatch(locationWatcher);
   
 }
 
 function locationError(err) {
   console.warn('location error (' + err.code + '): ' + err.message);
-  Pebble.sendAppMessage({
-    "icon": "no data",
-    "temperatureC":"01234",
-  });
+  transmitConfiguration({
+    "icon":"no data",
+    "temperatureC":"01234"
+    });
 }
 
 function readyCallback(event) {
   isReady = true;
-  //var callback;
-  //while (callbacks.length > 0) {
-  //  callback = callbacks.shift();
-  //  callback(event);
-  //}
-  //console.log("connect!" + e.ready);
+  var callback;
+  while (callbacks.length > 0) {
+    callback = callbacks.shift();
+    callback(event);
   window.navigator.geolocation.getCurrentPosition(locationSuccess, locationError, locationOptions);
-  //console.log(e.type);
+  }
 }
 
 // Retrieves stored configuration from localStorage.
@@ -128,7 +119,7 @@ function prepareConfiguration(serialized_settings) {
 
 // Takes a JSON message as input.  Sends the message to the watch.
 function transmitConfiguration(settings) {
-  console.log('sending message: '+ JSON.stringify(settings));
+  //console.log('sending message: '+ JSON.stringify(settings));
   Pebble.sendAppMessage(settings, function(event) {
     // Message delivered successfully
   }, logError);
@@ -143,8 +134,6 @@ function logError(event) {
 function showConfiguration(event) {
   //onReady(function() {
     var opts = getOptions();
-    //var url  = "http://zecoj.com/pebble/fuzzy.text.shake.html";
-    //var url  = "http://cdn.rawgit.com/zecoj/fuzzy.text.shake/gh-pages/index.html";
     var url  = "http://zecoj.github.io/fuzzy.text.shake/";
     console.log(opts);
     Pebble.openURL(url + "#options=" + encodeURIComponent(opts));
@@ -167,12 +156,11 @@ function webviewclosed(event) {
 
     var message = prepareConfiguration(resp);
     transmitConfiguration(message);
-  console.log('WEB_bluetooth: '+options.bluetooth);
   });
 }
 
 function appmessage(event) {
-  window.navigator.geolocation.getCurrentPosition(locationSuccess, locationError, locationOptions);
+  if(!isFetching)window.navigator.geolocation.getCurrentPosition(locationSuccess, locationError, locationOptions);
   console.log("message!");
 }
 
