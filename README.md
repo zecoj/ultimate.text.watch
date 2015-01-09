@@ -8,7 +8,7 @@ features:
   + human (ex. 12:44 = sixteen to one)
   + machine (ex. 12:44 = twelve forty four)
 - (optional) alignment
-- hake to show detailed time, date, battery & (optional) current weather condition
+- shake to show detailed time, date, battery & (optional) current weather condition
 - midday & midnight time
 - monitor bluetooth connectivity with phone (vibrates & invert)
 
