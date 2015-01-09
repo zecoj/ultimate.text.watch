@@ -1,6 +1,6 @@
 ultimate.text.watch
-(a Pebble watch face)
 ===================
+(a Pebble watch face)
 
 features:
 - tells time in plain English multiple ways:
