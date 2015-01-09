@@ -1,12 +1,15 @@
-fuzzy.text.shake
-================
+ultimate.text.watch
+(a Pebble watch face)
+===================
 
-my stripped-clean & battery-life-focused fork from fuzzy text int'l (https://github.com/hallettj/Fuzzy-Text-International)
-
-added:
-- shake to show detailed time, date, battery & current weather condition
+features:
+- tells time in plain English multiple ways:
+  + fuzzy (ex. 12:44 = quarter to one)
+  + human (ex. 12:44 = sixteen to one)
+  + machine (ex. 12:44 = twelve sixteen)
+- (optional) alignment
+- hake to show detailed time, date, battery & (optional) current weather condition
 - midday & midnight time
-- monitor bluetooth connectivity with phone
+- monitor bluetooth connectivity with phone (vibrates & invert)
 
-removed:
-- translations
+Originally forked from fuzzy text int'l (https://github.com/hallettj/Fuzzy-Text-International)
