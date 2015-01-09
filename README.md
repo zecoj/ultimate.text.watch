@@ -12,4 +12,5 @@ features:
 - midday & midnight time
 - monitor bluetooth connectivity with phone (vibrates & invert)
 
-Originally forked from fuzzy text int'l (https://github.com/hallettj/Fuzzy-Text-International)
+Originally forked from "fuzzy text int'l" (https://github.com/hallettj/Fuzzy-Text-International)
+Also used some code from "TextWatch-en" (https://github.com/arska/TextWatch-en)
