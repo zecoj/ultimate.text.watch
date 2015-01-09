@@ -164,6 +164,11 @@
 			var $form	= $('#config');
 			var opts	= JSON.parse(getParam('options'));
 			if (opts) {
+				if (opts.text_style) {
+					$form.find('[name="style"]').filter(function(i, btn) {
+						return btn.value === opts.text_style;
+					}).prop('checked', true);
+				}
 				if (opts.text_align) {
 					$form.find('[name="align"]').filter(function(i, btn) {
 						return btn.value === opts.text_align;
