@@ -8,8 +8,8 @@
 	<!-- Basic Page Needs
   ================================================== -->
 	<meta charset="utf-8">
-	<title>Fuzzy.Text.Shake</title>
-	<meta name="description" content="configuration page for Fuzzy.Text.Shake, a Pebble watchface">
+	<title>Ultimate.Text.Watch</title>
+	<meta name="description" content="configuration page for Ultimate.Text.Watch, a Pebble watchface">
 	<meta name="author" content="Ben Nguyen">
 
 	<!-- Mobile Specific Metas
@@ -32,10 +32,32 @@
 
 	<div class="container">
 		<header>
-			<h3>Fuzzy.Text.Shake</h3>
+			<h3>Ultimate.Text.Watch</h3>
 		</header>
 		
 		<form id="config" role="form" class="input-lg">
+			<fieldset>
+				<legend>Text style:</legend>
+				<div class="radio">
+					<label>
+						<input type="radio" name="style" value="fuzzy" checked />
+						Fuzzy (ex. 12:44 = quarter to one)
+					</label>
+				</div>
+				<div class="radio">
+					<label>
+						<input type="radio" name="style" value="human" />
+						Human (ex. 12:44 = sixteen to one)
+					</label>
+				</div>
+				<div class="radio">
+					<label>
+						<input type="radio" name="style" value="machine" />
+						Machine (ex. 12:44 = twelve forty four)
+					</label>
+				</div>
+			</fieldset>
+			<br />
 			<fieldset>
 				<legend>Text alignment:</legend>
 				<div class="radio">
@@ -131,6 +153,7 @@
 			});
 
 			var options = {
+				text_style:	params.style || 'fuzzy',
 				text_align:	params.align || 'right',
 				bluetooth:	params.bluetooth === 'on',
 				weather:	params.weather
@@ -142,6 +165,11 @@
 			var $form	= $('#config');
 			var opts	= JSON.parse(getParam('options'));
 			if (opts) {
+				if (opts.text_style) {
+					$form.find('[name="style"]').filter(function(i, btn) {
+						return btn.value === opts.text_style;
+					}).prop('checked', true);
+				}
 				if (opts.text_align) {
 					$form.find('[name="align"]').filter(function(i, btn) {
 						return btn.value === opts.text_align;
