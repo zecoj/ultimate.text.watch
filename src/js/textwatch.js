@@ -2,6 +2,11 @@ var isReady = false;
 var isFetching = false;
 var callbacks = [];
 
+var style = {
+  fuzzy: 0,
+  human:   1,
+  machine:  2
+};
 var alignment = {
   center: 0,
   left:   1,
@@ -73,8 +78,6 @@ function locationSuccess(pos) {
   var datetime = "======= lastsync: " + new Date();
   console.log(datetime);
   if(!isFetching)fetchWeather(coordinates.latitude, coordinates.longitude);
-  //window.navigator.geolocation.clearWatch(locationWatcher);
-  
 }
 
 function locationError(err) {
@@ -113,15 +116,14 @@ function prepareConfiguration(serialized_settings) {
   return {
     "0": alignment[settings.text_align],
     "1": settings.bluetooth ? 1 : 0,
-    "2": weather[settings.weather]
+    "2": weather[settings.weather],
+    "5": style[settings.text_style]
   };
 }
 
 // Takes a JSON message as input.  Sends the message to the watch.
 function transmitConfiguration(settings) {
-  //console.log('sending message: '+ JSON.stringify(settings));
   Pebble.sendAppMessage(settings, function(event) {
-    // Message delivered successfully
   }, logError);
 }
 
@@ -132,12 +134,10 @@ function logError(event) {
 
 
 function showConfiguration(event) {
-  //onReady(function() {
     var opts = getOptions();
-    var url  = "http://zecoj.github.io/fuzzy.text.shake/";
+    var url  = "http://zecoj.github.io/ultimate.text.watch/";
     console.log(opts);
     Pebble.openURL(url + "#options=" + encodeURIComponent(opts));
-  //});
 }
 
 function webviewclosed(event) {
@@ -146,6 +146,7 @@ function webviewclosed(event) {
 
   var options = JSON.parse(resp);
   if (typeof options.bluetooth === 'undefined' &&
+      typeof options.text_style === 'undefined' &&
       typeof options.text_align === 'undefined' &&
       typeof options.weather === 'undefined') {
     return;

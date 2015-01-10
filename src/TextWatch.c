@@ -3,8 +3,6 @@
 
 #include "num2words.h"
 
-#define DEBUG 0
-
 #define NUM_LINES 4
 #define LINE_LENGTH 7
 #define STATUS_LINE_LENGTH 10
@@ -30,6 +28,7 @@
   
 #define MyTupletCString(_key, _cstring) ((const Tuplet) { .type = TUPLE_CSTRING, .key = _key, .cstring = { .data = _cstring, .length = strlen(_cstring) + 1 }})
 
+static uint8_t text_style = 0;
 static uint8_t text_align = TEXT_ALIGN_CENTER;
 static bool bluetooth = true;
 static bool bluetooth_old = true;
@@ -81,6 +80,10 @@ static char temp_c_str[] = "01234";
 #define  CONF_WEATHER               2
 #define  WEATHER_ICON_KEY           3
 #define  WEATHER_TEMPERATURE_C_KEY  4
+#define  CONF_TEXTSTYLE             5
+  
+static void display_initial_time(struct tm *t);
+static void display_time(struct tm *t);
 
 /////////////////////////////////////////////////ZECOJ/////////////////////////////////////////////////
 
@@ -211,14 +214,23 @@ static void sync_error_callback(DictionaryResult dict_error, AppMessageResult ap
 
 static void sync_tuple_changed_callback(const uint32_t key, const Tuple* new_tuple, const Tuple* old_tuple, void* context) {
   GTextAlignment alignment;
+  time_t raw_time;
 
     // process the first and subsequent update
     switch (key) {
+        case CONF_TEXTSTYLE:
+            text_style = new_tuple->value->uint8;
+            if (text_style != persist_read_int(CONF_TEXTSTYLE)) {
+              persist_write_int(CONF_TEXTSTYLE, text_style);
+              time(&raw_time);
+              t = localtime(&raw_time);
+              display_time(t);
+            }
+            break;
+
         case CONF_ALIGNMENT:
-//  APP_LOG(APP_LOG_LEVEL_DEBUG, "Tuple Changed:  %u, %u", old_tuple->value->uint8, new_tuple->value->uint8);
             text_align = new_tuple->value->uint8;
             persist_write_int(CONF_ALIGNMENT, text_align);
-            //APP_LOG(APP_LOG_LEVEL_DEBUG, "Set text alignment: %u", text_align);
 
             alignment = lookup_text_alignment(text_align);
             for (int i = 0; i < NUM_LINES; i++)
@@ -420,7 +432,16 @@ static void time_to_lines(int hours, int minutes, int seconds, char lines[NUM_LI
 {
   int length = NUM_LINES * BUFFER_SIZE + 1;
   char timeStr[length];
-  time_to_words(lang, hours, minutes, seconds, timeStr, length);
+  if (text_style == 0) {
+    time_to_words_0(lang, hours, minutes, seconds, timeStr, length);
+  }
+  else if (text_style == 1) {
+    time_to_words_1(lang, hours, minutes, seconds, timeStr, length);
+  }
+  else if (text_style == 2) {
+    time_to_words_2(lang, hours, minutes, seconds, timeStr, length);
+  }
+  //APP_LOG(APP_LOG_LEVEL_DEBUG, "HERE SIR:  !%s!", timeStr);
   
   // Empty all lines
   for (int i = 0; i < NUM_LINES; i++)
@@ -607,6 +628,7 @@ static void window_load(Window *window)
 
   // prepare the initial values of your data
     Tuplet initial_values[] = {
+        TupletInteger(CONF_TEXTSTYLE, (uint8_t) text_style),
         TupletInteger(CONF_ALIGNMENT, (uint8_t) text_align),
         TupletInteger(CONF_BLUETOOTH, (uint8_t) bluetooth ? 1 : 0),
         TupletInteger(CONF_WEATHER,   (uint8_t) weather),
@@ -636,9 +658,12 @@ static void window_unload(Window *window)
 {
 
   // Free layers
-  layer_destroy(text_layer_get_layer(topbar.layer[0]));
-  layer_destroy(text_layer_get_layer(bottombarL.layer[0]));
-  layer_destroy(text_layer_get_layer(bottombarR.layer[0]));
+  //layer_destroy(text_layer_get_layer(topbar.layer[0]));
+  //layer_destroy(text_layer_get_layer(bottombarL.layer[0]));
+  //layer_destroy(text_layer_get_layer(bottombarR.layer[0]));
+  text_layer_destroy(topbar.layer[0]);
+  text_layer_destroy(bottombarL.layer[0]);
+  text_layer_destroy(bottombarR.layer[0]);
   inverter_layer_destroy(inverter_layer);
 
   for (int i = 0; i < NUM_LINES; i++)
@@ -650,6 +675,10 @@ static void window_unload(Window *window)
 static void handle_init() {
   
   // Load settings from persistent storage
+  if (persist_exists(CONF_TEXTSTYLE))
+  {
+    text_style = persist_read_int(CONF_TEXTSTYLE);
+  }
   if (persist_exists(CONF_ALIGNMENT))
   {
     text_align = persist_read_int(CONF_ALIGNMENT);
@@ -699,6 +728,8 @@ static void handle_init() {
 
   // Subscribe to shake events
   accel_tap_service_subscribe(wrist_flick_handler);
+  accel_service_set_sampling_rate(ACCEL_SAMPLING_10HZ);
+
   
   // to sync watch fields
   app_message_open(app_message_inbox_size_maximum(), app_message_outbox_size_maximum());

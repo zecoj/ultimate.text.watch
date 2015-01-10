@@ -3,6 +3,7 @@
         "alignment": 0,
         "bluetooth": 1,
         "icon": 3,
+        "style": 5,
         "temperatureC": 4,
         "weather": 2
     },
@@ -11,15 +12,15 @@
         "configurable"
     ],
     "companyName": "Ben Nguyen",
-    "longName": "FuzzyTextShake",
+    "longName": "Ultimate Text Watch",
     "projectType": "native",
     "resources": {
         "media": []
     },
-    "shortName": "FuzzyTextShake",
+    "shortName": "Ultimate Text Watch",
     "uuid": "ad75ca5b-7256-463c-b770-fb4b8152cc51",
     "versionCode": 4,
-    "versionLabel": "1.9",
+    "versionLabel": "2.1",
     "watchapp": {
         "watchface": true
     }
