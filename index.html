@@ -125,13 +125,13 @@
 				<legend>Temperature unit:</legend>
 				<div class="radio">
 					<label>
-						<input type="radio" name="temp_unit" value="1" checked />
+						<input type="radio" name="temp_unit" value="on" checked />
 						° Celsius
 					</label>
 				</div>
 				<div class="radio">
 					<label>
-						<input type="radio" name="temp_unit" value="0" />
+						<input type="radio" name="temp_unit" value="off" />
 						° Fahrenheit
 					</label>
 				</div>
@@ -172,7 +172,7 @@
 				text_style:	params.style || 'fuzzy',
 				text_align:	params.align || 'right',
 				bluetooth:	params.bluetooth === 'on',
-				temp_unit:	params.temp_unit === 1,
+				temp_unit:	params.temp_unit === 'on',
 				weather:	params.weather
 			}
 			return options;
