@@ -172,6 +172,7 @@
 				text_style:	params.style || 'fuzzy',
 				text_align:	params.align || 'right',
 				bluetooth:	params.bluetooth === 'on',
+				temp_unit:	params.temp_unit === 1,
 				weather:	params.weather
 			}
 			return options;
@@ -200,6 +201,11 @@
 				if (opts.weather) {
 					$form.find('[name="weather"]').filter(function(i, btn) {
 						return btn.value === opts.weather;
+					}).prop('checked', true);
+				}
+				if (opts.temp_unit) {
+					$form.find('[name="temp_unit"]').filter(function(i, btn) {
+						return btn.value === opts.temp_unit;
 					}).prop('checked', true);
 				}
 			}
