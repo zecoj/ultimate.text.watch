@@ -3,8 +3,10 @@
         "alignment": 0,
         "bluetooth": 1,
         "icon": 3,
-        "style": 5,
+        "style": 7,
         "temperatureC": 4,
+        "temperatureF": 5,
+        "temperatureUnit": 6,
         "weather": 2
     },
     "capabilities": [
@@ -20,7 +22,7 @@
     "shortName": "Ultimate Text Watch",
     "uuid": "ad75ca5b-7256-463c-b770-fb4b8152cc51",
     "versionCode": 4,
-    "versionLabel": "2.1",
+    "versionLabel": "2.2",
     "watchapp": {
         "watchface": true
     }

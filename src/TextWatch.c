@@ -70,17 +70,21 @@ static TextLine bottombarR;
 static AppTimer *shake_timeout = NULL;
 
 static AppSync sync;
-static uint8_t sync_buffer[128];
+static uint8_t sync_buffer[256];
 
 static char weather_str[] = "012345678901234";
 static char temp_c_str[] = "01234";
+static char temp_f_str[] = "01234";
+static bool temp_unit = true; // true==C false==F
 
 #define  CONF_ALIGNMENT             0
 #define  CONF_BLUETOOTH             1
 #define  CONF_WEATHER               2
 #define  WEATHER_ICON_KEY           3
 #define  WEATHER_TEMPERATURE_C_KEY  4
-#define  CONF_TEXTSTYLE             5
+#define  WEATHER_TEMPERATURE_F_KEY  5
+#define  WEATHER_TEMPERATURE_UNIT   6
+#define  CONF_TEXTSTYLE             7
   
 static void display_initial_time(struct tm *t);
 static void display_time(struct tm *t);
@@ -139,7 +143,12 @@ void info_lines(char *load_status) {
   strftime(status_bars.topbar, sizeof(status_bars.topbar), "%H:%M", t);
   if (strcmp(weather_str, "no data") && weather) {
     if (!strcmp(load_status, "")) {
-    snprintf(status_bars.topbar, sizeof(status_bars.topbar), "%s • %s %s", status_bars.topbar, weather_str, temp_c_str);
+      if(temp_unit) {
+        snprintf(status_bars.topbar, sizeof(status_bars.topbar), "%s • %s %s", status_bars.topbar, weather_str, temp_c_str);
+      }
+      else {
+        snprintf(status_bars.topbar, sizeof(status_bars.topbar), "%s • %s %s", status_bars.topbar, weather_str, temp_f_str);
+      }
     }
     else {
     snprintf(status_bars.topbar, sizeof(status_bars.topbar), "%s • %s", status_bars.topbar, load_status);
@@ -208,80 +217,111 @@ void bluetooth_connection_handler(bool connected) {
 
 static void sync_error_callback(DictionaryResult dict_error, AppMessageResult app_message_error, void *context) {
     APP_LOG(APP_LOG_LEVEL_DEBUG, "App Message Sync Error: %i - %s", app_message_error, translate_error(app_message_error));
-    strcpy(weather_str, "no data");
-    strcpy(temp_c_str, "01234");
+    //strcpy(weather_str, "no data");
+    //strcpy(temp_c_str, "01234");
 }
 
 static void sync_tuple_changed_callback(const uint32_t key, const Tuple* new_tuple, const Tuple* old_tuple, void* context) {
   GTextAlignment alignment;
   time_t raw_time;
 
-    // process the first and subsequent update
-    switch (key) {
-        case CONF_TEXTSTYLE:
-            text_style = new_tuple->value->uint8;
-            if (text_style != persist_read_int(CONF_TEXTSTYLE)) {
-              persist_write_int(CONF_TEXTSTYLE, text_style);
-              time(&raw_time);
-              t = localtime(&raw_time);
-              display_time(t);
-            }
-            break;
+  // process the first and subsequent update
+  switch (key) {
+    case CONF_TEXTSTYLE:
+      if (new_tuple->value->uint8 != persist_read_int(CONF_TEXTSTYLE)) {
+        APP_LOG(APP_LOG_LEVEL_DEBUG, "CONF_TEXTSTYLE: I'm called");
+        text_style = new_tuple->value->uint8;
+        persist_write_int(CONF_TEXTSTYLE, text_style);
+        time(&raw_time);
+        t = localtime(&raw_time);
+        display_time(t);
+      }
+      break;
 
-        case CONF_ALIGNMENT:
-            text_align = new_tuple->value->uint8;
-            persist_write_int(CONF_ALIGNMENT, text_align);
+    case CONF_ALIGNMENT:
+      if (new_tuple->value->uint8 != persist_read_int(CONF_ALIGNMENT)) {
+        APP_LOG(APP_LOG_LEVEL_DEBUG, "CONF_ALIGNMENT: I'm called");
+        text_align = new_tuple->value->uint8;
+        persist_write_int(CONF_ALIGNMENT, text_align);
+        alignment = lookup_text_alignment(text_align);
+        for (int i = 0; i < NUM_LINES; i++)
+        {
+          text_layer_set_text_alignment(lines[i].currentLayer, alignment);
+          text_layer_set_text_alignment(lines[i].nextLayer, alignment);
+          layer_mark_dirty(text_layer_get_layer(lines[i].currentLayer));
+          layer_mark_dirty(text_layer_get_layer(lines[i].nextLayer));
+        }
+      }
+      break;
 
-            alignment = lookup_text_alignment(text_align);
-            for (int i = 0; i < NUM_LINES; i++)
-            {
-              text_layer_set_text_alignment(lines[i].currentLayer, alignment);
-              text_layer_set_text_alignment(lines[i].nextLayer, alignment);
-              layer_mark_dirty(text_layer_get_layer(lines[i].currentLayer));
-              layer_mark_dirty(text_layer_get_layer(lines[i].nextLayer));
-            }
-            break;
-      
-        case CONF_BLUETOOTH:
-            bluetooth_old = bluetooth;
-            bluetooth = new_tuple->value->uint8 == 1;
-            persist_write_bool(CONF_BLUETOOTH, bluetooth);
-            if (bluetooth && !bluetooth_old) {
-              //APP_LOG(APP_LOG_LEVEL_DEBUG, "re-subscribing");
-              bluetooth_connection_service_subscribe(bluetooth_connection_handler);
-              bt_connect_toggle = bluetooth_connection_service_peek();
-              layer_set_hidden(inverter_layer_get_layer(inverter_layer), bt_connect_toggle);
-            }
-            if (!bluetooth && bluetooth_old) {
-              //APP_LOG(APP_LOG_LEVEL_DEBUG, "unsubscribing");
-              bluetooth_connection_service_unsubscribe();
-            }
-            //APP_LOG(APP_LOG_LEVEL_DEBUG, "Set bluetooth: %u", bluetooth ? 1 : 0);
-            break;
-      
-        case CONF_WEATHER:
-            weather = new_tuple->value->uint8;
-            persist_write_int(CONF_WEATHER, weather);
-            //APP_LOG(APP_LOG_LEVEL_DEBUG, "Set weather: %u", weather);
-            break;
+    case CONF_BLUETOOTH:
+      if (new_tuple->value->uint8 != persist_read_int(CONF_BLUETOOTH)) {
+        APP_LOG(APP_LOG_LEVEL_DEBUG, "CONF_BLUETOOTH: I'm called");
+        bluetooth_old = bluetooth;
+        bluetooth = new_tuple->value->uint8 == 1;
+        persist_write_bool(CONF_BLUETOOTH, bluetooth);
+        if (bluetooth && !bluetooth_old) {
+          //APP_LOG(APP_LOG_LEVEL_DEBUG, "re-subscribing");
+          bluetooth_connection_service_subscribe(bluetooth_connection_handler);
+          bt_connect_toggle = bluetooth_connection_service_peek();
+          layer_set_hidden(inverter_layer_get_layer(inverter_layer), bt_connect_toggle);
+        }
+        if (!bluetooth && bluetooth_old) {
+          //APP_LOG(APP_LOG_LEVEL_DEBUG, "unsubscribing");
+          bluetooth_connection_service_unsubscribe();
+        }
+        //APP_LOG(APP_LOG_LEVEL_DEBUG, "Set bluetooth: %u", bluetooth ? 1 : 0);
+      }
+      break;
 
-        case WEATHER_ICON_KEY:
-            strcpy(weather_str, new_tuple->value->cstring);
-            persist_write_string(WEATHER_ICON_KEY, weather_str);
-            // make all lowercase
-            weather_str[0] = tolower((unsigned char)weather_str[0]);
-            break;
-            
-        case WEATHER_TEMPERATURE_C_KEY:
-            strcpy(temp_c_str, new_tuple->value->cstring);
-            //strcat(temp_c_str, "\u00B0C");
-            //APP_LOG(APP_LOG_LEVEL_DEBUG, "Set temp_c_str: %s", temp_c_str);
-            persist_write_string(WEATHER_TEMPERATURE_C_KEY, temp_c_str);
-            if(weather_force_update) {
-              info_lines("");
-              //weather_force_update = false;
-            }
-            break;
+    case CONF_WEATHER:
+      if (new_tuple->value->uint8 != persist_read_int(CONF_WEATHER)) {
+        APP_LOG(APP_LOG_LEVEL_DEBUG, "CONF_WEATHER: I'm called");
+        weather = new_tuple->value->uint8;
+        persist_write_int(CONF_WEATHER, weather);
+        //APP_LOG(APP_LOG_LEVEL_DEBUG, "Set weather: %u", weather);
+      }
+      break;
+
+    case WEATHER_ICON_KEY:
+      //if (strcmp(new_tuple->value->cstring, persist_read_string(WEATHER_ICON_KEY))) {
+        strcpy(weather_str, new_tuple->value->cstring);
+        persist_write_string(WEATHER_ICON_KEY, weather_str);
+        // make all lowercase
+        weather_str[0] = tolower((unsigned char)weather_str[0]);
+        APP_LOG(APP_LOG_LEVEL_DEBUG, "CONF_ICON_KEY: I'm called");
+      //}
+      break;
+
+    case WEATHER_TEMPERATURE_C_KEY:
+      //if (strcmp(new_tuple->value->cstring, persist_read_string(WEATHER_TEMPERATURE_C_KEY))) {
+        strcpy(temp_c_str, new_tuple->value->cstring);
+        persist_write_string(WEATHER_TEMPERATURE_C_KEY, temp_c_str);
+        if(weather_force_update) {
+          info_lines("");
+        }
+        APP_LOG(APP_LOG_LEVEL_DEBUG, "CONF_TEMPERATURE_C_KEY: I'm called %s", temp_c_str);
+      //}
+      break;
+
+    case WEATHER_TEMPERATURE_F_KEY:
+      //if (strcmp(new_tuple->value->cstring, persist_read_string(WEATHER_TEMPERATURE_F_KEY))) {
+        strcpy(temp_f_str, new_tuple->value->cstring);
+        persist_write_string(WEATHER_TEMPERATURE_F_KEY, temp_f_str);
+        if(weather_force_update) {
+          info_lines("");
+        }
+        APP_LOG(APP_LOG_LEVEL_DEBUG, "CONF_TEMPERATURE_F_KEY: I'm called %s", temp_f_str);
+      //}
+      break;
+
+    case WEATHER_TEMPERATURE_UNIT:
+      if (new_tuple->value->uint8 != persist_read_int(WEATHER_TEMPERATURE_UNIT)) {
+        APP_LOG(APP_LOG_LEVEL_DEBUG, "WEATHER_TEMPERATURE_UNIT: I'm called");
+        temp_unit = new_tuple->value->uint8 == 1;
+        persist_write_bool(WEATHER_TEMPERATURE_UNIT,temp_unit);
+      }
+      break;
     }
 }
 
@@ -632,8 +672,10 @@ static void window_load(Window *window)
         TupletInteger(CONF_ALIGNMENT, (uint8_t) text_align),
         TupletInteger(CONF_BLUETOOTH, (uint8_t) bluetooth ? 1 : 0),
         TupletInteger(CONF_WEATHER,   (uint8_t) weather),
+        TupletInteger(WEATHER_TEMPERATURE_UNIT, (bool) temp_unit),
         MyTupletCString(WEATHER_ICON_KEY, weather_str),
-        MyTupletCString(WEATHER_TEMPERATURE_C_KEY, temp_c_str)
+        MyTupletCString(WEATHER_TEMPERATURE_C_KEY, temp_c_str),
+        MyTupletCString(WEATHER_TEMPERATURE_F_KEY, temp_f_str)
     };
     // initialize the syncronization
     app_sync_init(&sync, sync_buffer, sizeof(sync_buffer), initial_values, ARRAY_LENGTH(initial_values),
@@ -704,6 +746,15 @@ static void handle_init() {
     persist_read_string(WEATHER_TEMPERATURE_C_KEY, temp_c_str, sizeof(temp_c_str));
     //APP_LOG(APP_LOG_LEVEL_DEBUG, "Read WEATHER_TEMPERATURE_C_KEY from store: %s", temp_c_str);
   }
+  if (persist_exists(WEATHER_TEMPERATURE_F_KEY))
+  {
+    persist_read_string(WEATHER_TEMPERATURE_F_KEY, temp_f_str, sizeof(temp_f_str));
+    //APP_LOG(APP_LOG_LEVEL_DEBUG, "Read WEATHER_TEMPERATURE_F_KEY from store: %s", temp_f_str);
+  }
+  if (persist_exists(WEATHER_TEMPERATURE_UNIT))
+  {
+    temp_unit=persist_read_bool(WEATHER_TEMPERATURE_UNIT);
+  }
 
   window = window_create();
   window_set_background_color(window, GColorBlack);
@@ -729,7 +780,6 @@ static void handle_init() {
   // Subscribe to shake events
   accel_tap_service_subscribe(wrist_flick_handler);
   accel_service_set_sampling_rate(ACCEL_SAMPLING_10HZ);
-
   
   // to sync watch fields
   app_message_open(app_message_inbox_size_maximum(), app_message_outbox_size_maximum());

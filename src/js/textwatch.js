@@ -2,6 +2,11 @@ var isReady = false;
 var isFetching = false;
 var callbacks = [];
 
+var temp_unit = {
+  f: 0,
+  c: 1
+};
+
 var style = {
   fuzzy: 0,
   human:   1,
@@ -47,19 +52,22 @@ function fetchWeather(latitude, longitude) {
         if(req.status == 200) {
           console.log(req.responseText);
           response = JSON.parse(req.responseText);
-          var temperatureC, icon, city;
+          var temperatureC, temperatureF, icon, city;
           if (response && response.list && response.list.length > 0) {
             var weatherResult = response.list[0];
             temperatureC = Math.round(weatherResult.main.temp - 273.15);
+            temperatureF = Math.round((weatherResult.main.temp*1.8) - 459.67);
             icon = weatherResult.weather[0].main;
             city = weatherResult.name;
             console.log(temperatureC);
+            console.log(temperatureF);
             console.log(icon);
             console.log(city);
             localStorage.setItem("lastFetch", curTime);
             transmitConfiguration({
               "icon":icon,
-              "temperatureC":"" + temperatureC+"\u00B0C"
+              "temperatureC":"" + temperatureC+"\u00B0C",
+              "temperatureF":"" + temperatureF+"\u00B0F"
               });
           }
         } else {
@@ -84,7 +92,8 @@ function locationError(err) {
   console.warn('location error (' + err.code + '): ' + err.message);
   transmitConfiguration({
     "icon":"no data",
-    "temperatureC":"01234"
+    "temperatureC":"01234",
+    "temperatureF":"01234"
     });
 }
 
@@ -117,7 +126,8 @@ function prepareConfiguration(serialized_settings) {
     "0": alignment[settings.text_align],
     "1": settings.bluetooth ? 1 : 0,
     "2": weather[settings.weather],
-    "5": style[settings.text_style]
+    "6": temp_unit[settings.temp_unit],
+    "7": style[settings.text_style]
   };
 }
 
@@ -148,6 +158,7 @@ function webviewclosed(event) {
   if (typeof options.bluetooth === 'undefined' &&
       typeof options.text_style === 'undefined' &&
       typeof options.text_align === 'undefined' &&
+      typeof options.temp_unit === 'undefined' &&
       typeof options.weather === 'undefined') {
     return;
   }
